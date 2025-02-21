@@ -113,6 +113,7 @@ private JasperConnector jasperConnector;
 1. Create a variable for generatePDFReport method in java service
 2. Drag and drop the iframe widget and set the Source Property to the filecontents of the variable created as shown below.
 <img width="959" alt="image" src="https://github.com/user-attachments/assets/3e474f93-0fea-44d1-81fe-ce4699bd76fc" />
+
 Similar process can be for database api as well.
 
 
