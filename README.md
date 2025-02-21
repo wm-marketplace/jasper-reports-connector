@@ -37,18 +37,84 @@ You can import connector dist/jasper.zip artifact in WaveMaker studio applicatio
 
 ## Use jasper connector in WaveMaker
 
-```
+### step1
+1. Download the latest zip [here](https://github.com/wavemaker/jasper-reports-connector/releases/)
+2. Import the downloaded jasper reports Connector zip into your app using the Import Resource option in the Connector folder.  ![image](https://github.com/user-attachments/assets/df95de69-0767-4dab-8ebf-d270daeade6d)
+   ![image](https://github.com/user-attachments/assets/e3d74e39-8c23-4081-9cc9-161940f0a113)
 
-@Autowired
-private JasperConnector connectorInstance;
+### step2: Generating Jasper Report
+1. Jasper report can be generated from imported database/ API.
+2. Build your report using Jasper Studio, which enables you to build and customize look and feel of the report. Once you design the report export the reportxml(.jrxml) and import into WaveMaker project using Import Resource to the ${ServiceName}/src/ folder
+3. Place the .jrxml file in the java service src folder as shown below:
+<img width="958" alt="image" src="https://github.com/user-attachments/assets/5507dfbd-9681-48fb-b46f-6847edf04ba6" />
+4. The below example shown is for rest API i.e. random user [here](https://randomuser.me/api?results=10&format=json)
 
-File pdffile = new File(reportDir + "/employee.pdf");
-connectorInstance.generateReport(JasperExportType.PDF, "employee/emp.jrxml", new HashMap<>(), dataSourceProvider.getDataSource(), pdffile);
-System.out.println("PDF report generated successfully using data source");
+### step3: create a java service
+1. Create a java service JasperReportsService.
+2. Add the following code
+ ```
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.wavemaker.runtime.security.SecurityService;
+import com.wavemaker.runtime.service.annotations.ExposeToClient;
+import com.wavemaker.runtime.service.annotations.HideFromClient;
+import com.wavemaker.connector.jasper.JasperConnector;
+import com.wavemaker.connector.jasper.JasperExportType;
+import com.wavemaker.runtime.commons.file.model.DownloadResponse;
+import com.wavemaker.runtime.commons.file.model.Downloadable;
+import java.io.*;
+import java.util.HashMap;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.client.RestTemplate;
+   ```
 
-```
+.
+   ```
+@ExposeToClient
+public class JasperReportService {
 
-Apart from above api, there are multiple apis exposed in this connector to generate jasper reports, visit JasperConnector java class in api module.
+    private static final Logger logger = LoggerFactory.getLogger(JasperReportService.class);
+
+    @Autowired
+    private SecurityService securityService;
+
+    @Autowired
+private JasperConnector jasperConnector;
+
+      public Downloadable generatePDFReport() {
+            String data = invokeService();
+            logger.info("++++++++" +data);
+            
+            logger.info("Calling connector to generate the jasperRepoet");
+            ByteArrayOutputStream pdfReportStream = (ByteArrayOutputStream) jasperConnector.generateReport(JasperExportType.PDF, "example.jrxml", new HashMap<>(), data);
+                                
+            DownloadResponse downloadableResponse = new DownloadResponse(new ByteArrayInputStream(pdfReportStream.toByteArray()), "application/pdf", "jasper.pdf");
+
+            downloadableResponse.setInline(false);
+
+            return downloadableResponse;
+        }
+    private String invokeService() {
+            String url = "https://randomuser.me/api?results=10&format=json";
+            
+            RestTemplate restTemplate = new RestTemplate();
+            String response = restTemplate.getForObject(url, String.class);
+            logger.info(" Rest response : " + response);
+            return response;
+        }   } 
+   ```
+
+
+### Step 4: In the Main page drag and drop an Iframe onto the canvas.
+
+1. Create a variable for generatePDFReport method in java service
+2. Drag and drop the iframe widget and set the Source Property to the filecontents of the variable created as shown below.
+<img width="959" alt="image" src="https://github.com/user-attachments/assets/3e474f93-0fea-44d1-81fe-ce4699bd76fc" />
+Similar process can be for database api as well.
+
 
 
 
